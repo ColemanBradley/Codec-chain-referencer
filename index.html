@@ -88,19 +88,19 @@
 
   <!-- DEPTH SLIDER -->
   <div class="depth-wrap">
-    <div class="depth-row">
+    <div class="depth-labels-row">
       <span class="depth-lbl" id="lbl-0">Foundational</span>
-      <div class="slider-track">
-        <div class="slider-fill" id="slider-fill"></div>
-        <div class="slider-thumb" id="slider-thumb"></div>
-        <input
-          type="range" min="0" max="2" step="1" value="1"
-          class="slider-input" id="depth-slider"
-          oninput="updateDepth(this.value)"
-        />
-      </div>
       <span class="depth-lbl" id="lbl-1">Standard</span>
       <span class="depth-lbl" id="lbl-2">Deep dive</span>
+    </div>
+    <div class="slider-track">
+      <div class="slider-fill" id="slider-fill"></div>
+      <div class="slider-thumb" id="slider-thumb"></div>
+      <input
+        type="range" min="0" max="2" step="1" value="1"
+        class="slider-input" id="depth-slider"
+        oninput="updateDepth(this.value)"
+      />
     </div>
   </div>
 
@@ -182,7 +182,7 @@
         <div class="section" id="sec-synoptic">
           <div class="sec-head" id="head-synoptic" onclick="toggleSection('synoptic')">
             <span class="sec-dot dot-s"></span>
-            <span class="sec-title">Synoptic parallels</span>
+            <span class="sec-title" id="title-synoptic">Synoptic parallels</span>
             <span class="sec-ct" id="ct-synoptic">0</span>
             <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -193,7 +193,7 @@
         <div class="section" id="sec-ot">
           <div class="sec-head" id="head-ot" onclick="toggleSection('ot')">
             <span class="sec-dot dot-o"></span>
-            <span class="sec-title">OT quotations &amp; allusions</span>
+            <span class="sec-title" id="title-ot">OT quotations &amp; allusions</span>
             <span class="sec-ct" id="ct-ot">0</span>
             <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -204,7 +204,7 @@
         <div class="section" id="sec-thematic">
           <div class="sec-head" id="head-thematic" onclick="toggleSection('thematic')">
             <span class="sec-dot dot-t"></span>
-            <span class="sec-title">Thematic parallels</span>
+            <span class="sec-title" id="title-thematic">Thematic parallels</span>
             <span class="sec-ct" id="ct-thematic">0</span>
             <span class="ai-pill">✦ AI</span>
             <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>

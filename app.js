@@ -266,6 +266,17 @@ async function runSearch() {
     document.getElementById('ct-ot').textContent       = (data.ot        || []).length;
     document.getElementById('ct-thematic').textContent = (data.thematic  || []).length;
 
+    // Relabel sections based on whether source is OT or NT
+    if (data.isOT) {
+      document.getElementById('title-synoptic').textContent = 'NT quotations & allusions';
+      document.getElementById('title-ot').textContent       = 'OT parallels';
+      document.getElementById('title-thematic').textContent = 'Thematic connections';
+    } else {
+      document.getElementById('title-synoptic').textContent = 'Synoptic parallels';
+      document.getElementById('title-ot').textContent       = 'OT quotations & allusions';
+      document.getElementById('title-thematic').textContent = 'Thematic parallels';
+    }
+
     buildCards(data.synoptic  || [], 'tag-s', 'body-synoptic');
     buildCards(data.ot        || [], 'tag-o', 'body-ot');
     buildCards(data.thematic  || [], 'tag-t', 'body-thematic');

@@ -54,11 +54,30 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing query.' }) };
   }
 
+  // Detect whether the query is an OT or NT passage
+  const OT_BOOKS = ['genesis','exodus','leviticus','numbers','deuteronomy','joshua','judges','ruth',
+    '1 samuel','2 samuel','1 kings','2 kings','1 chronicles','2 chronicles','ezra','nehemiah',
+    'esther','job','psalm','psalms','proverbs','ecclesiastes','song of solomon','song of songs',
+    'isaiah','jeremiah','lamentations','ezekiel','daniel','hosea','joel','amos','obadiah',
+    'jonah','micah','nahum','habakkuk','zephaniah','haggai','zechariah','malachi'];
+  const queryLower = query.toLowerCase();
+  const isOT = OT_BOOKS.some(b => queryLower.startsWith(b));
+
   const DEPTH_PROMPT = [
-    'Return only the most well-established, direct parallels — major synoptic relationships and clear OT quotations. Limit thematic parallels to 2–3.',
-    'Return a balanced set including synoptic relationships, OT quotations and allusions, and notable thematic connections. Aim for 8–15 total results.',
-    'Go deep. Identify all synoptic parallels, OT quotations, verbal allusions, typological echoes, structural parallels, and thematic connections across the full canon. Return as many genuine connections as you can find — 25 or more is appropriate for well-referenced passages.'
+    'Return only the most well-established, direct parallels. Limit thematic parallels to 2–3.',
+    'Return a balanced set of parallels. Aim for 8–15 total results.',
+    'Go deep across the full canon. Return as many genuine connections as you can find — 25 or more is appropriate for well-referenced passages.'
   ];
+
+  const sectionInstructions = isOT
+    ? `The source passage is from the Old Testament. Structure your response as:
+- "synoptic": Direct NT quotations and allusions to this passage — places where NT authors explicitly cite or echo it
+- "ot": Parallel OT passages — related texts within the Old Testament (type/antitype, similar themes, verbal parallels)
+- "thematic": Broader thematic connections across the canon`
+    : `The source passage is from the New Testament. Structure your response as:
+- "synoptic": Synoptic parallels — direct gospel parallels or parallel NT passages
+- "ot": OT quotations and allusions — OT passages this text quotes, echoes, or fulfills
+- "thematic": Broader thematic connections across the canon`;
 
   const prompt = `You are a biblical scholar assistant. Given the scripture reference or passage below, identify parallel passages across the Bible.
 
@@ -66,21 +85,24 @@ Passage/Reference: "${query}"
 
 ${DEPTH_PROMPT[depth ?? 1]}
 
+${sectionInstructions}
+
 Respond ONLY with a valid JSON object in this exact format — no markdown fences, no preamble, no explanation:
 {
   "sourceText": "brief quote of the source verse if known, else empty string",
+  "isOT": ${isOT},
   "synoptic": [
-    { "ref": "Book Chapter:Verse", "note": "explanation of the parallel connection", "tag": "Synoptic" }
+    { "ref": "Book Chapter:Verse", "note": "explanation of the connection", "tag": "NT quotation" }
   ],
   "ot": [
-    { "ref": "Book Chapter:Verse", "note": "explanation of the connection", "tag": "OT quotation" }
+    { "ref": "Book Chapter:Verse", "note": "explanation of the connection", "tag": "OT parallel" }
   ],
   "thematic": [
     { "ref": "Book Chapter:Verse", "note": "explanation of the thematic connection", "tag": "Thematic" }
   ]
 }
 
-Use "OT quotation" or "OT allusion" as the tag value for OT items depending on the nature of the connection.`;
+For the tag field: use "NT quotation" or "NT allusion" for synoptic items when isOT is true. Use "Synoptic" for gospel parallels and "NT parallel" for other NT parallels when isOT is false. Use "OT quotation" or "OT allusion" for ot items when isOT is false. Use "OT parallel" for ot items when isOT is true.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {

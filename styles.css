@@ -77,11 +77,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .search-btn svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
 .depth-wrap { background: var(--surf); border-bottom: 1px solid var(--bdr); padding: 10px 24px; flex-shrink: 0; transition: background 0.2s; }
-.depth-row { display: flex; align-items: center; gap: 12px; }
-.depth-lbl { font-size: 11px; color: var(--t3); white-space: nowrap; transition: color 0.15s; min-width: 72px; }
-.depth-lbl:last-child { text-align: right; }
+.depth-labels-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.depth-lbl { font-size: 11px; color: var(--t3); transition: color 0.15s; }
 .depth-lbl.active { color: var(--acc); font-weight: 500; }
-.slider-track { flex: 1; position: relative; height: 4px; background: var(--surf3); border-radius: 2px; cursor: pointer; }
+.slider-track { position: relative; height: 4px; background: var(--surf3); border-radius: 2px; cursor: pointer; }
 .slider-fill { position: absolute; left: 0; top: 0; height: 4px; background: var(--acc); border-radius: 2px; width: 50%; transition: width 0.2s; }
 .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 18px; height: 18px; background: var(--surf); border: 2px solid var(--acc); border-radius: 50%; left: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: left 0.2s; pointer-events: none; }
 .slider-input { position: absolute; inset: -8px 0; opacity: 0; cursor: pointer; width: 100%; height: calc(100% + 16px); }
