@@ -1,16 +1,12 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const API_BIBLE_KEY = window.ENV_API_BIBLE_KEY || '';
+// No API keys here — both ANTHROPIC_API_KEY and API_BIBLE_KEY live in
+// Netlify environment variables and are accessed server-side only.
 const NASB_BIBLE_ID = '40072c4a5aba4022-01'; // verify in API.Bible dashboard
 const NLT_BIBLE_ID  = '65eec8e0b60e656b-01';  // verify in API.Bible dashboard
 const INITIAL_SHOW  = 5;
 
 const DEPTH_LABELS = ['Foundational', 'Standard', 'Deep dive'];
 const DEPTH_PCTS   = ['0%', '50%', '100%'];
-const DEPTH_PROMPT = [
-  'Return only the most well-established, direct parallels — major synoptic relationships and clear OT quotations. Limit thematic parallels to 2–3.',
-  'Return a balanced set including synoptic relationships, OT quotations and allusions, and notable thematic connections. Aim for 8–15 total results.',
-  'Go deep. Identify all synoptic parallels, OT quotations, verbal allusions, typological echoes, structural parallels, and thematic connections across the full canon. Return as many genuine connections as you can find — 25 or more is appropriate for well-referenced passages.'
-];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let currentTrans = 'WEB';
@@ -142,26 +138,22 @@ async function loadVerse(wrap, ref, trans) {
     return;
   }
 
-  // API.Bible fetch for NASB / NLT
+  // API.Bible fetch for NASB / NLT — routed through serverless proxy
   try {
     const bibleId = trans === 'NASB' ? NASB_BIBLE_ID : NLT_BIBLE_ID;
-    const query   = encodeURIComponent(ref);
-    const res = await fetch(
-      `https://api.scripture.api.bible/v1/bibles/${bibleId}/search?query=${query}&limit=1`,
-      { headers: { 'api-key': API_BIBLE_KEY } }
-    );
-    if (!res.ok) throw new Error('API.Bible error ' + res.status);
+    const res = await fetch('/.netlify/functions/claude-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'verse', ref, bibleId })
+    });
+    if (!res.ok) throw new Error('Proxy error ' + res.status);
     const data = await res.json();
-    const raw  = data?.data?.verses?.[0]?.text
-              || data?.data?.passages?.[0]?.content
-              || '';
-    const text = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
     loadingEl.style.display = 'none';
-    verseEl.textContent = text || '(Verse text not available.)';
+    verseEl.textContent = data.text || '(Verse text not available.)';
     verseEl.style.display = 'block';
   } catch (err) {
     loadingEl.style.display = 'none';
-    verseEl.textContent = '(Could not fetch verse — check your API.Bible key.)';
+    verseEl.textContent = '(Could not fetch verse — check your API.Bible key in Netlify env vars.)';
     verseEl.style.display = 'block';
   }
 }

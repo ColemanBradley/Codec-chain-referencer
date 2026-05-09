@@ -4,6 +4,8 @@ exports.handler = async function (event) {
   }
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  const BIBLE_KEY     = process.env.API_BIBLE_KEY;
+
   if (!ANTHROPIC_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Anthropic API key not configured.' }) };
   }
@@ -15,6 +17,38 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body.' }) };
   }
 
+  // ── VERSE FETCH (API.Bible) ───────────────────────────────────────────────
+  if (body.type === 'verse') {
+    if (!BIBLE_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'API.Bible key not configured.' }) };
+    }
+    const { ref, bibleId } = body;
+    if (!ref || !bibleId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing ref or bibleId.' }) };
+    }
+    try {
+      const encoded = encodeURIComponent(ref);
+      const res = await fetch(
+        `https://api.scripture.api.bible/v1/bibles/${bibleId}/search?query=${encoded}&limit=1`,
+        { headers: { 'api-key': BIBLE_KEY } }
+      );
+      if (!res.ok) throw new Error('API.Bible error ' + res.status);
+      const data = await res.json();
+      const raw  = data?.data?.verses?.[0]?.text
+                || data?.data?.passages?.[0]?.content
+                || '';
+      const text = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text || null })
+      };
+    } catch (err) {
+      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    }
+  }
+
+  // ── PARALLEL SEARCH (Claude) ──────────────────────────────────────────────
   const { query, depth } = body;
   if (!query) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing query.' }) };
@@ -26,13 +60,11 @@ exports.handler = async function (event) {
     'Go deep. Identify all synoptic parallels, OT quotations, verbal allusions, typological echoes, structural parallels, and thematic connections across the full canon. Return as many genuine connections as you can find — 25 or more is appropriate for well-referenced passages.'
   ];
 
-  const depthInstruction = DEPTH_PROMPT[depth ?? 1];
-
   const prompt = `You are a biblical scholar assistant. Given the scripture reference or passage below, identify parallel passages across the Bible.
 
 Passage/Reference: "${query}"
 
-${depthInstruction}
+${DEPTH_PROMPT[depth ?? 1]}
 
 Respond ONLY with a valid JSON object in this exact format — no markdown fences, no preamble, no explanation:
 {
@@ -74,7 +106,7 @@ Use "OT quotation" or "OT allusion" as the tag value for OT items depending on t
       };
     }
 
-    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const raw    = data.content[0].text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(raw);
 
     return {
