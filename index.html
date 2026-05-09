@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel Passage Finder — Seminary Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+    <a class="logo" href="#">
+      <div class="logo-icon">
+        <svg viewBox="0 0 18 18"><path d="M9 1.5L2.5 5.5v7l6.5 4 6.5-4v-7L9 1.5zm0 2.4 4.5 2.8v5.6L9 15.1 4.5 12.3V6.7L9 3.9z"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">Parallel Passage Finder</div>
+        <div class="logo-suite">Seminary Tools</div>
+      </div>
+    </a>
+    <div>
+      <button class="btn-ghost" onclick="toggleDark()" id="dark-btn">
+        <svg id="dark-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <span id="dark-label">Dark mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- SEARCH BAR -->
+  <div class="search-wrap">
+    <div class="search-row">
+      <input
+        class="search-input"
+        type="text"
+        id="search-input"
+        placeholder="Enter a reference (e.g. Romans 8:1) or paste passage text…"
+        autocomplete="off"
+      />
+
+      <!-- Translation picker -->
+      <div class="trans-wrap">
+        <button class="trans-btn" id="trans-btn" onclick="toggleDropdown()">
+          <span id="trans-label">WEB</span>
+          <svg class="trans-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="trans-dropdown" id="trans-dropdown">
+          <div class="dd-hdr">Choose translation</div>
+          <div class="dd-opt selected" id="opt-WEB" onclick="selectTrans('WEB')">
+            <div class="dd-radio"></div>
+            <div class="dd-info">
+              <div class="dd-name">WEB</div>
+              <div class="dd-full">World English Bible</div>
+              <span class="dd-badge badge-free">Unlimited · embedded</span>
+            </div>
+          </div>
+          <div class="dd-opt" id="opt-NASB" onclick="selectTrans('NASB')">
+            <div class="dd-radio"></div>
+            <div class="dd-info">
+              <div class="dd-name">NASB</div>
+              <div class="dd-full">New American Standard Bible</div>
+              <span class="dd-badge badge-lim">⚠ API · usage limited</span>
+            </div>
+          </div>
+          <div class="dd-opt" id="opt-NLT" onclick="selectTrans('NLT')">
+            <div class="dd-radio"></div>
+            <div class="dd-info">
+              <div class="dd-name">NLT</div>
+              <div class="dd-full">New Living Translation</div>
+              <span class="dd-badge badge-lim">⚠ API · usage limited</span>
+            </div>
+          </div>
+          <div class="dd-warn" id="dd-warn">
+            ⓘ NASB and NLT are fetched via API and count toward a monthly usage limit. WEB is embedded and always free.
+          </div>
+        </div>
+      </div>
+
+      <button class="search-btn" onclick="runSearch()">
+        <span>Find parallels</span>
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- DEPTH SLIDER -->
+  <div class="depth-wrap">
+    <div class="depth-row">
+      <span class="depth-lbl" id="lbl-0">Foundational</span>
+      <div class="slider-track">
+        <div class="slider-fill" id="slider-fill"></div>
+        <div class="slider-thumb" id="slider-thumb"></div>
+        <input
+          type="range" min="0" max="2" step="1" value="1"
+          class="slider-input" id="depth-slider"
+          oninput="updateDepth(this.value)"
+        />
+      </div>
+      <span class="depth-lbl" id="lbl-1">Standard</span>
+      <span class="depth-lbl" id="lbl-2">Deep dive</span>
+    </div>
+  </div>
+
+  <!-- MOBILE SOURCE ACCORDION (shown only on mobile) -->
+  <div class="mob-source" id="mob-source" style="display:none">
+    <div class="mob-src-trigger" onclick="toggleMobileSrc()">
+      <div class="mob-src-left">
+        <span class="mob-src-ref" id="mob-src-ref">—</span>
+        <span class="mob-src-badge" id="mob-src-badge">WEB</span>
+      </div>
+      <svg class="mob-src-chev" id="mob-src-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="mob-src-body" id="mob-src-body">
+      <div class="mob-src-verse" id="mob-src-verse"></div>
+    </div>
+  </div>
+
+  <!-- ERROR BANNER -->
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="source-sidebar" id="source-sidebar" style="display:none">
+      <div>
+        <div class="sidebar-lbl">Source passage</div>
+        <div class="src-ref" id="src-ref">—</div>
+        <div class="src-verse" id="src-verse"></div>
+        <span class="src-badge-el" id="src-badge-el">WEB</span>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="sidebar-lbl">Results found</div>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-n" id="stat-syn">0</div>
+            <div class="stat-l">Synoptic</div>
+          </div>
+          <div class="stat">
+            <div class="stat-n" id="stat-ot">0</div>
+            <div class="stat-l">OT</div>
+          </div>
+          <div class="stat">
+            <div class="stat-n" id="stat-th">0</div>
+            <div class="stat-l">Thematic</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RESULTS PANEL -->
+    <main class="results-panel" id="results-panel">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-glyph">✦</div>
+        <div class="empty-title">Find parallel passages</div>
+        <div class="empty-hint">Enter a scripture reference or paste any verse text, then search.</div>
+        <div class="example-pills">
+          <span class="ex-pill" onclick="fillExample('Romans 8:1')">Romans 8:1</span>
+          <span class="ex-pill" onclick="fillExample('John 3:16')">John 3:16</span>
+          <span class="ex-pill" onclick="fillExample('Isaiah 53:5')">Isaiah 53:5</span>
+          <span class="ex-pill" onclick="fillExample('Psalm 22:1')">Psalm 22:1</span>
+          <span class="ex-pill" onclick="fillExample('Genesis 3:15')">Genesis 3:15</span>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="loading-state" id="loading-state" style="display:none">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Finding parallels…</div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-content" style="display:none">
+
+        <!-- Synoptic -->
+        <div class="section" id="sec-synoptic">
+          <div class="sec-head" id="head-synoptic" onclick="toggleSection('synoptic')">
+            <span class="sec-dot dot-s"></span>
+            <span class="sec-title">Synoptic parallels</span>
+            <span class="sec-ct" id="ct-synoptic">0</span>
+            <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sec-body" id="body-synoptic"></div>
+        </div>
+
+        <!-- OT -->
+        <div class="section" id="sec-ot">
+          <div class="sec-head" id="head-ot" onclick="toggleSection('ot')">
+            <span class="sec-dot dot-o"></span>
+            <span class="sec-title">OT quotations &amp; allusions</span>
+            <span class="sec-ct" id="ct-ot">0</span>
+            <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sec-body" id="body-ot"></div>
+        </div>
+
+        <!-- Thematic -->
+        <div class="section" id="sec-thematic">
+          <div class="sec-head" id="head-thematic" onclick="toggleSection('thematic')">
+            <span class="sec-dot dot-t"></span>
+            <span class="sec-title">Thematic parallels</span>
+            <span class="sec-ct" id="ct-thematic">0</span>
+            <span class="ai-pill">✦ AI</span>
+            <svg class="sec-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sec-body" id="body-thematic"></div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
